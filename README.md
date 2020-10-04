@@ -13,23 +13,23 @@ These values should be updated within the appsettings.json file prior to startup
 
 ```
 - GitHub Organization name created in Organization Setup
-"Organization": "ORGANIZATION_NAME"
+		"Organization": "ORGANIZATION_NAME"
 
 - GitHub User to use within the created Organization
-"OrgOwner": "ORGANIZATION_OWNER"
+		"OrgOwner": "ORGANIZATION_OWNER"
 
 - Secret provided to the Webhook to validate the Event Signature
-"Secret": "WEBHOOK_SECRET"
+		"Secret": "WEBHOOK_SECRET"
 
 - Personal Access Token created in Organization Setup
-"Token": "OWNER_TOKEN"
+		"Token": "OWNER_TOKEN"
 
 - POST URL provided to the webhook to receive the repository creation payload
-"URL": "WEBHOOK_URL"
+		"URL": "WEBHOOK_URL"
 
 - Boolean controlling if you would like the service to handle registering the webhook on startup.
 - Set this to false if you would prefer to setup the webhook in some other way.
-"InitWebhook":  false
+		"InitWebhook":  false
 ```
 
 ## Startup
