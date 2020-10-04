@@ -41,10 +41,15 @@ namespace Protector.Logic
         public async Task AddBranchProtections(string repositoryName)
         {
             // The webhook payload does not seem to have the correct Default Branch name, its defaulted to master
-            // Get the new repository, it appears to have the correct default branch name on it
-            var repo = await client.Repository.Get(Organization, repositoryName);
+            // Also the repository doesn't seem to report the correct default branch consistently either
+            var repo = await client.Repository.Get(Organization, repositoryName);            
 
-            if (await AwaitDefaultBranch(repositoryName, repo.DefaultBranch))
+            if (Configuration["DefaultBranch"] != repo.DefaultBranch)
+            {
+                Console.WriteLine("Specified default did not match the repo");
+            }
+
+            if (await AwaitDefaultBranch(repositoryName, Configuration["DefaultBranch"]))
             {
                 // Adding Branch protections
                 // Required PR Reviews: Dismiss stale reviews and requiring at least 1 required approver
@@ -84,7 +89,7 @@ namespace Protector.Logic
                 try
                 {
                     var result = await client.Repository.Branch.Get(Organization, repositoryName, branch);
-
+                    
                     if (result != null && result.Name == branch)
                     {
                         return true;
