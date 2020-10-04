@@ -9,20 +9,26 @@ Web Service designed to add branch protections to the default branch of a newly 
 	* Access Token Scopes admin:org_hook, repo
 	
 ## Service Setup
+These values should be updated within the appsettings.json file prior to startup
+
 ```
-These values should be updated within the appsettings.json file prior to startup\n
-- GitHub Organization name created in Organization Setup\n
-"Organization": "ORGANIZATION_NAME"\n\n
-- GitHub User to use within the created Organization\n
-"OrgOwner": "ORGANIZATION_OWNER"\n\n
-- Secret provided to the Webhook to validate the Event Signature\n
-"Secret": "WEBHOOK_SECRET"\n\n
-- Personal Access Token created in Organization Setup\n
-"Token": "OWNER_TOKEN"\n\n
-- POST URL provided to the webhook to receive the repository creation payload\n
-"URL": "WEBHOOK_URL"\n\n
-- Boolean controlling if you would like the service to handle registering the webhook on startup.\n
-- Set this to false if you would prefer to setup the webhook in some other way.\n
+- GitHub Organization name created in Organization Setup
+"Organization": "ORGANIZATION_NAME"
+
+- GitHub User to use within the created Organization
+"OrgOwner": "ORGANIZATION_OWNER"
+
+- Secret provided to the Webhook to validate the Event Signature
+"Secret": "WEBHOOK_SECRET"
+
+- Personal Access Token created in Organization Setup
+"Token": "OWNER_TOKEN"
+
+- POST URL provided to the webhook to receive the repository creation payload
+"URL": "WEBHOOK_URL"
+
+- Boolean controlling if you would like the service to handle registering the webhook on startup.
+- Set this to false if you would prefer to setup the webhook in some other way.
 "InitWebhook":  false
 ```
 
