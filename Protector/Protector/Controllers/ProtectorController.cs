@@ -36,9 +36,6 @@ namespace Protector.Controllers
             var payloadBody = await reader.ReadToEndAsync();
             var payload = JsonConvert.DeserializeObject<RepositoryPayloadRequest>(payloadBody);
 
-            //Check the state, is it closed & merged = true
-            //Means was accepted & put back into repo
-            //Thus assign contributor badge to member
             if (pl.ValidateSignature(payloadBody, signature) && payload.action == "created" && eventName == "repository")
             {
                 var result = await pl.AddBranchProtections(payload.repository.default_branch, payload.repository.name);
