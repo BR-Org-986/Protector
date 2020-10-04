@@ -26,6 +26,9 @@ These values should be updated within the appsettings.json file prior to startup
 
 - POST URL provided to the webhook to receive the repository creation payload
 		"URL": "WEBHOOK_URL"
+		
+- Default Branch specified for the Organization. Currently, trying to read this live from GitHub is inconsistent.
+		"DefaultBranch": "DEFAULT_BRANCH"
 
 - Boolean controlling if you would like the service to handle registering the webhook on startup.
 - Set this to false if you would prefer to setup the webhook in some other way.
