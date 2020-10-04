@@ -38,7 +38,8 @@ namespace Protector.Controllers
 
             if (pl.ValidateSignature(payloadBody, signature) && payload.action == "created" && eventName == "repository")
             {
-                await pl.AddBranchProtections(payload.repository.default_branch, payload.repository.name);
+                // Payload doesn't have the correct Default branch, so just grab the repository name
+                await pl.AddBranchProtections(payload.repository.name);
             }
 
             return Ok();
