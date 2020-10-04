@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Protector.Logic
 {
+    /// <summary>
+    /// Contains all the logic for handling the branch protections
+    /// </summary>
     public class ProtectorLogic : IProtectorLogic
     {
         private static InMemoryCredentialStore credentials;
@@ -15,6 +18,10 @@ namespace Protector.Logic
         private readonly IConfiguration Configuration;
         private string UserName;
 
+        /// <summary>
+        /// Setup our GitHubClient in the constructor to be used
+        /// </summary>
+        /// <param name="_configuration">Configuration key/values from appsettings</param>
         public ProtectorLogic(IConfiguration _configuration)
         {
             Configuration = _configuration;
@@ -23,16 +30,22 @@ namespace Protector.Logic
             client = new GitHubClient(new ProductHeaderValue(UserName), credentials);
         }
 
-        public async Task<bool> AddBranchProtections(string defaultBranch, string repositoryName)
-        {           
-            
-            var result = await client.Repository.Branch.UpdateBranchProtection(UserName, repositoryName, defaultBranch, new BranchProtectionSettingsUpdate(true));
-            await CreateIssue(defaultBranch, repositoryName);
-           
-            return true;
+        /// <summary>
+        /// Add the default branch protections to the provided branch in the specified repository
+        /// </summary>
+        /// <param name="defaultBranch">Represents the default branch name setup by the Organization</param>
+        /// <param name="repositoryName">New repository created that needs branch protections</param>        
+        public async Task AddBranchProtections(string defaultBranch, string repositoryName)
+        {   
+            var result = await client.Repository.Branch.UpdateBranchProtection(UserName, repositoryName, defaultBranch, new BranchProtectionSettingsUpdate(true));            
+            await CreateIssue(repositoryName);          
         }
 
-        private async Task CreateIssue(string defaultBranch, string repositoryName)
+        /// <summary>
+        /// Create and close an issue on the given repository detailing what protections were added
+        /// </summary>        
+        /// <param name="repositoryName">Repository name to create the issue under</param>        
+        private async Task CreateIssue(string repositoryName)
         {
             var tempIssue = new NewIssue("Setup Default Branch Protections");
             tempIssue.Body = "Testing creating an issue regarding setting master branch";
@@ -42,6 +55,12 @@ namespace Protector.Logic
             await client.Issue.Update(UserName, repositoryName, createdIssue.Number, updateIssue);
         }
 
+        /// <summary>
+        /// Validate the signature using our provided secret to ensure this is a valid WebHook Event
+        /// </summary>
+        /// <param name="payload">Payload provided from the event to hash and compare with the signature</param>
+        /// <param name="signatureWithPrefix">Signature provided with the sha1= prefix</param>
+        /// <returns></returns>
         public bool ValidateSignature(string payload, string signatureWithPrefix)
         {
 
