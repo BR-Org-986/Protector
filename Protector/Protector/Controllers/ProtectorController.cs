@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Octokit;
-using Octokit.Internal;
 using Protector.Logic;
 using Protector.Models;
 
@@ -19,9 +12,7 @@ namespace Protector.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class ProtectorController : ControllerBase
-    {
-        static InMemoryCredentialStore credentials;
-        static GitHubClient client;
+    {        
         private readonly IConfiguration Configuration;
         private readonly ILogger<ProtectorController> _logger;
         private readonly IProtectorLogic pl;
@@ -29,9 +20,7 @@ namespace Protector.Controllers
         public ProtectorController(IConfiguration _configuration, ILogger<ProtectorController> logger)
         {
             Configuration = _configuration;
-            _logger = logger;
-            credentials = new InMemoryCredentialStore(new Credentials(Configuration["Token"]));
-            client = new GitHubClient(new ProductHeaderValue(Configuration["OrgOwner"]), credentials);
+            _logger = logger;            
             pl = new ProtectorLogic(Configuration);
         }       
 
@@ -52,7 +41,7 @@ namespace Protector.Controllers
             //Thus assign contributor badge to member
             if (pl.ValidateSignature(payloadBody, signature) && payload.action == "created" && eventName == "repository")
             {
-               
+                var result = await pl.AddBranchProtections(payload.repository.default_branch, payload.repository.name);
             }
 
             return Ok();

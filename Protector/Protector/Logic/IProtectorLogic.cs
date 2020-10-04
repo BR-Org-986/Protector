@@ -7,6 +7,7 @@ namespace Protector.Logic
 {
     public interface IProtectorLogic
     {
-        public bool ValidateSignature(string payload, string signatureWithPrefix);
+        bool ValidateSignature(string payload, string signatureWithPrefix);
+        Task<bool> AddBranchProtections(string defaultBranch, string repositoryName);
     }
 }

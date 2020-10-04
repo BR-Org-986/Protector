@@ -12,6 +12,7 @@
         public string name { get; set; }
         public string full_name { get; set; }
         public Owner owner { get; set; }
+        public string default_branch { get; set; }
     }
 
     public class Owner

@@ -1,18 +1,45 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Octokit;
+using Octokit.Internal;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Protector.Logic
 {
     public class ProtectorLogic : IProtectorLogic
     {
-
+        private static InMemoryCredentialStore credentials;
+        private static GitHubClient client;
         private readonly IConfiguration Configuration;
+        private string UserName;
 
         public ProtectorLogic(IConfiguration _configuration)
         {
             Configuration = _configuration;
+            UserName = Configuration["OrgOwner"];
+            credentials = new InMemoryCredentialStore(new Credentials(Configuration["Token"]));
+            client = new GitHubClient(new ProductHeaderValue(UserName), credentials);
+        }
+
+        public async Task<bool> AddBranchProtections(string defaultBranch, string repositoryName)
+        {           
+            
+            var result = await client.Repository.Branch.UpdateBranchProtection(UserName, repositoryName, defaultBranch, new BranchProtectionSettingsUpdate(true));
+            await CreateIssue(defaultBranch, repositoryName);
+           
+            return true;
+        }
+
+        private async Task CreateIssue(string defaultBranch, string repositoryName)
+        {
+            var tempIssue = new NewIssue("Setup Default Branch Protections");
+            tempIssue.Body = "Testing creating an issue regarding setting master branch";
+            var createdIssue = await client.Issue.Create(UserName, repositoryName, tempIssue);
+            var updateIssue = createdIssue.ToUpdate();
+            updateIssue.State = ItemState.Closed;
+            await client.Issue.Update(UserName, repositoryName, createdIssue.Number, updateIssue);
         }
 
         public bool ValidateSignature(string payload, string signatureWithPrefix)
