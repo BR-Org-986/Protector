@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Octokit;
 using Octokit.Internal;
+using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,6 +19,7 @@ namespace Protector.Logic
         private static GitHubClient client;
         private readonly IConfiguration Configuration;
         private string UserName;
+        private string Organization;
 
         /// <summary>
         /// Setup our GitHubClient in the constructor to be used
@@ -26,19 +29,38 @@ namespace Protector.Logic
         {
             Configuration = _configuration;
             UserName = Configuration["OrgOwner"];
+            Organization = Configuration["Organization"];
             credentials = new InMemoryCredentialStore(new Credentials(Configuration["Token"]));
             client = new GitHubClient(new ProductHeaderValue(UserName), credentials);
         }
 
         /// <summary>
         /// Add the default branch protections to the provided branch in the specified repository
-        /// </summary>
-        /// <param name="defaultBranch">Represents the default branch name setup by the Organization</param>
+        /// </summary>        
         /// <param name="repositoryName">New repository created that needs branch protections</param>        
-        public async Task AddBranchProtections(string defaultBranch, string repositoryName)
-        {   
-            var result = await client.Repository.Branch.UpdateBranchProtection(UserName, repositoryName, defaultBranch, new BranchProtectionSettingsUpdate(true));            
-            await CreateIssue(repositoryName);          
+        public async Task AddBranchProtections(string repositoryName)
+        {
+            // The webhook payload does not seem to have the correct Default Branch name, its defaulted to master
+            // Get the new repository, it appears to have the correct default branch name on it
+            var repo = await client.Repository.Get(Organization, repositoryName);
+
+            if (await AwaitDefaultBranch(repositoryName, repo.DefaultBranch))
+            {
+                // Adding Branch protections
+                // Required PR Reviews: Dismiss stale reviews and requiring at least 1 required approver
+                // Enforce Admins to follow branch policy as well
+                var requiredPullRequestReviews = new BranchProtectionRequiredReviewsUpdate(true, false, 1);
+                var branchProtections = new BranchProtectionSettingsUpdate(null, requiredPullRequestReviews, null, true);
+                
+                var result = await client.Repository.Branch.UpdateBranchProtection(Organization, repositoryName, repo.DefaultBranch, branchProtections);
+                
+                // Create and close an issue in this repository denoting the actions we've taken
+                await CreateIssue(repositoryName);
+
+            } else
+            {
+                Console.WriteLine("Default branch not detected");
+            }            
         }
 
         /// <summary>
@@ -48,11 +70,30 @@ namespace Protector.Logic
         private async Task CreateIssue(string repositoryName)
         {
             var tempIssue = new NewIssue("Setup Default Branch Protections");
-            tempIssue.Body = "Testing creating an issue regarding setting master branch";
-            var createdIssue = await client.Issue.Create(UserName, repositoryName, tempIssue);
+            tempIssue.Body = $"@{UserName} Default Branch Protections Enabled.\n Protections:\n Dismiss Stale Reviews and require at least 1 approver prior to merging.\n Enforce Admin: Apply same protections to Admins.";
+            var createdIssue = await client.Issue.Create(Organization, repositoryName, tempIssue);
             var updateIssue = createdIssue.ToUpdate();
             updateIssue.State = ItemState.Closed;
-            await client.Issue.Update(UserName, repositoryName, createdIssue.Number, updateIssue);
+            await client.Issue.Update(Organization, repositoryName, createdIssue.Number, updateIssue);
+        }
+
+        private async Task<bool> AwaitDefaultBranch(string repositoryName, string branch)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    var result = await client.Repository.Branch.Get(Organization, repositoryName, branch);
+
+                    if (result != null && result.Name == branch)
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception) { }
+                System.Threading.Thread.Sleep(2000);
+            }
+            return false;
         }
 
         /// <summary>
